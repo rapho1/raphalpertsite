@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raphael — Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #0a0a0a;
+      --white: #f5f5f0;
+      --gray: #888;
+      --border: #d0d0cc;
+      --font-mono: 'Space Mono', monospace;
+      --font-body: 'Courier Prime', monospace;
+      --radius: 16px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      cursor: none;
+    }
+    a, button { cursor: none; }
+
+    /* ── CUSTOM CURSOR ── */
+    #cursor {
+      position: fixed;
+      top: 0; left: 0;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      mix-blend-mode: difference;
+      pointer-events: none;
+      z-index: 99999;
+      transform: translate(-50%, -50%);
+      will-change: left, top;
+      transition: width 0.18s ease, height 0.18s ease;
+    }
+    #cursor.hovered { width: 28px; height: 28px; }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 20px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 14px 32px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 100px;
+      border: 1px solid rgba(0,0,0,0.07);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      white-space: nowrap;
+      transition: box-shadow 0.3s;
+    }
+    nav.scrolled { box-shadow: 0 6px 32px rgba(0,0,0,0.12); }
+    nav a {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--black);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      opacity: 0.45;
+      transition: opacity 0.2s;
+    }
+    nav a:hover { opacity: 1; }
+
+    /* HERO */
+    #hero {
+      padding: 140px 40px 60px;
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .hero-name {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.5;
+      flex-shrink: 0;
+      width: 120px;
+    }
+    .hero-bio {
+      font-size: 13px;
+      line-height: 1.7;
+      flex: 1;
+    }
+    .hero-skills {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 2;
+      color: var(--gray);
+      letter-spacing: 0.03em;
+      flex-shrink: 0;
+      width: 160px;
+    }
+    .hero-photo-placeholder {
+      flex-shrink: 0;
+      width: 200px; height: 220px;
+      background: #ccc;
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 11px; color: #999; letter-spacing: 0.05em;
+    }
+    .hero-photo {
+      flex-shrink: 0;
+      width: 200px; height: 220px;
+      object-fit: cover; object-position: top;
+      filter: grayscale(100%);
+      border-radius: var(--radius);
+      display: block;
+    }
+
+    /* WORK */
+    #work { max-width: 1100px; margin: 0 auto; padding: 0 40px 60px; }
+
+    /* ── EXPANDING CARDS ── */
+    .cards-wrap {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 40px;
+      height: 460px;
+    }
+
+    .exp-card {
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+      transition: flex 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      text-decoration: none;
+      background: var(--black);
+      border-radius: var(--radius);
+    }
+
+    /* Desktop: expand on hover */
+    .cards-wrap:hover .exp-card { flex: 0.6; }
+    .cards-wrap:hover .exp-card:hover { flex: 3.2; }
+
+    /* Photo — top portion */
+    .exp-card-img {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 55%;
+      overflow: hidden;
+    }
+    .exp-card-img img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.75s cubic-bezier(0.77, 0, 0.18, 1);
+    }
+    .exp-card:hover .exp-card-img img { transform: scale(1.04); }
+
+    /* Bottom area — number + title */
+    .exp-card-body {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 45%;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .exp-card-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 8px;
+    }
+
+    .exp-card-title {
+      font-family: var(--font-mono);
+      font-size: clamp(18px, 3vw, 32px);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      /* title clips when card is collapsed */
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    /* When card is not hovered (and wrap is being hovered), fade title */
+    .cards-wrap:hover .exp-card:not(:hover) .exp-card-title {
+      opacity: 0.35;
+      font-size: clamp(12px, 1.5vw, 18px);
+    }
+
+    /* Divider line in the middle of card */
+    .exp-card-line {
+      position: absolute;
+      top: 55%; left: 0; right: 0;
+      height: 1px;
+      background: rgba(255,255,255,0.12);
+    }
+
+    /* PROJECT BLOCKS */
+    .project-block { margin-bottom: 60px; }
+    .project-mockup {
+      width: 100%; background: #f0f0ed; border-radius: var(--radius);
+      display: flex; justify-content: center; align-items: center;
+      padding: 40px 20px; gap: 12px; min-height: 420px;
+      cursor: pointer; text-decoration: none;
+      transition: opacity 0.2s; overflow: hidden;
+    }
+    .project-mockup:hover { opacity: 0.9; }
+    .phone-mock {
+      width: 120px; height: 240px; background: #fff;
+      border-radius: 24px; border: 2px solid #ddd;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 9px; color: #bbb;
+      letter-spacing: 0.05em; text-align: center; padding: 12px;
+      position: relative; overflow: hidden;
+    }
+    .phone-mock::before {
+      content: ''; position: absolute; top: 12px; left: 50%;
+      transform: translateX(-50%); width: 40px; height: 6px;
+      background: #e0e0e0; border-radius: 3px;
+    }
+    .phone-mock.blurred { filter: blur(3px); opacity: 0.6; }
+    .coming-soon-badge {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--black); color: #fff;
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 20px;
+      white-space: nowrap;
+    }
+    .project-info { padding: 20px 0 0; }
+    .project-title { font-family: var(--font-mono); font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .project-desc { font-size: 13px; color: var(--gray); }
+
+    /* DARK FEATURED */
+    .project-featured {
+      background: var(--black); color: #fff; border-radius: var(--radius);
+      margin-bottom: 12px;
+      cursor: pointer; text-decoration: none; display: block;
+      transition: opacity 0.2s;
+    }
+    .project-featured:hover { opacity: 0.9; }
+    .project-featured-inner { padding: 48px 48px 0; display: flex; flex-direction: column; }
+    .festival-title { font-family: var(--font-mono); font-size: 48px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+    .festival-arrow { font-size: 28px; color: #fff; align-self: flex-end; margin-top: -60px; }
+    .festival-dates { display: flex; gap: 32px; margin: 24px 0 16px; font-family: var(--font-mono); font-size: 22px; font-weight: 700; }
+    .festival-grid { display: grid; grid-template-columns: 180px 1fr; gap: 12px; width: 100%; padding-bottom: 40px; }
+    .festival-archive-label { font-family: var(--font-mono); font-size: 26px; font-weight: 700; line-height: 1.1; border: 2px solid rgba(255,255,255,0.3); padding: 16px; align-self: start; }
+    .festival-card-mini { background: #1a1a1a; border: 1px solid #333; padding: 10px; font-family: var(--font-mono); font-size: 9px; color: #888; }
+    .festival-card-mini strong { color: #fff; display: block; margin-bottom: 4px; font-size: 10px; }
+
+    /* EXTRA PROJECTS */
+    .extra-projects { display: none; }
+    .extra-projects.visible { display: block; }
+
+    /* MORE BUTTON */
+    .more-wrap { text-align: center; padding: 20px 0 60px; }
+    .btn-more {
+      display: inline-block; font-family: var(--font-mono); font-size: 12px;
+      letter-spacing: 0.08em; color: var(--black); border: 1px solid var(--black);
+      border-radius: var(--radius);
+      padding: 10px 40px; background: none; cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-more:hover { background: var(--black); color: #fff; }
+    .btn-more.hidden { display: none; }
+
+    /* CONTACT */
+    #contact { border-top: 1px solid var(--border); padding: 80px 40px 60px; max-width: 1100px; margin: 0 auto; }
+    .contact-title { font-family: var(--font-mono); font-size: clamp(40px, 8vw, 80px); font-weight: 700; font-style: normal; line-height: 1; margin-bottom: 40px; }
+    .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 700px; }
+    .contact-link {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em;
+      color: var(--black); text-decoration: none;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .contact-link:hover { background: var(--black); color: var(--white); border-color: var(--black); }
+    .contact-link .arrow { font-size: 16px; opacity: 0.6; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 20px 40px; text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--gray); }
+
+    /* REVEAL */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ── BURGER ── */
+    .burger {
+      position: fixed;
+      top: 20px; right: 20px;
+      z-index: 101;
+      display: none; /* shown only on mobile via media query */
+      flex-direction: column; justify-content: center; align-items: center; gap: 5px;
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0,0,0,0.07);
+      border-radius: 100px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      padding: 0;
+      cursor: none;
+      transition: box-shadow 0.2s;
+    }
+    .burger:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .burger span {
+      display: block; width: 18px; height: 1.5px;
+      background: var(--black); border-radius: 2px;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .burger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    /* Mobile menu overlay */
+    .mobile-menu {
+      display: none;
+      position: fixed; inset: 0;
+      background: var(--white);
+      z-index: 99;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 32px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-family: var(--font-mono); font-size: 32px; font-weight: 700;
+      color: var(--black); text-decoration: none; letter-spacing: -0.02em;
+      opacity: 0.4; transition: opacity 0.2s;
+    }
+    .mobile-menu a:hover { opacity: 1; }
+
+    /* ══ MOBILE ══ */
+    @media (max-width: 768px) {
+      nav { display: none; }
+      .burger { display: flex; }
+
+      #hero {
+        padding: 100px 20px 40px;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .hero-name, .hero-bio, .hero-skills { width: 100%; }
+      .hero-photo-placeholder, .hero-photo {
+        width: 100%; height: 260px;
+      }
+
+      #work { padding: 0 20px 40px; }
+
+      /* Cards — vertical, tap to expand */
+      .cards-wrap {
+        flex-direction: column;
+        height: auto;
+        gap: 4px;
+      }
+      .exp-card {
+        flex: none !important;
+        height: 64px;
+        transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .exp-card.active { height: 300px; }
+      .cards-wrap:hover .exp-card { flex: unset; }
+      .cards-wrap:hover .exp-card:hover { flex: unset; }
+      .cards-wrap:hover .exp-card:not(:hover) .exp-card-title { opacity: 1; font-size: 18px; }
+      .exp-card-img { height: 60%; }
+      .exp-card-title { font-size: 18px !important; }
+      .exp-card-num { font-size: 9px; }
+
+      .phone-mock { width: 68px; height: 136px; border-radius: 12px; }
+      .phone-mock::before { width: 22px; height: 4px; }
+
+      .project-featured-inner { padding: 24px 20px 0; }
+      .festival-title { font-size: 26px; }
+      .festival-dates { gap: 14px; font-size: 13px; flex-wrap: wrap; }
+      .festival-grid { grid-template-columns: 1fr; }
+      .festival-arrow { margin-top: -36px; }
+
+      #contact { padding: 60px 20px 40px; }
+      .contact-grid { grid-template-columns: 1fr 1fr; max-width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#hero" onclick="closeMobileMenu()">home</a>
+    <a href="#" onclick="closeMobileMenu()">blog</a>
+    <a href="#" onclick="closeMobileMenu()">resume</a>
+    <a href="#contact" onclick="closeMobileMenu()">about</a>
+  </div>
+
+  <!-- BURGER — fixed top right, always in DOM -->
+  <button class="burger" id="burger" onclick="toggleMenu()" aria-label="menu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- NAV — desktop only -->
+  <nav id="nav">
+    <a href="#hero">home</a>
+    <a href="https://www.linkedin.com/in/raphael-alpert-683a1b214/" target="_blank">linkedin</a>
+    <a href="#">resume</a>
+    <a href="#contact">contact</a>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-name">Hello there<br>I'm Raphael</div>
+    <div class="hero-bio">
+      Specializing in communication-driven web and motion design, I strive to infuse every project with clarity, emotional depth, and bold personality. Drawing from my multicultural experience and sharp visual instincts
+    </div>
+    <div class="hero-skills">
+      Product Design<br>
+      Product Vision<br>
+      Art Direction<br>
+      3D Graphics<br>
+      Animation<br>
+      Vibe Coding
+    </div>
+    <!-- Swap for: <img class="hero-photo" src="photo.jpg" alt="Raphael"> -->
+    <img class="hero-photo" src="photo.jpg" alt="Raphael">
+  </section>
+
+  <!-- WORK -->
+  <section id="work">
+
+
+    <div class="project-block reveal reveal-delay-1">
+      <a href="project.html?id=4" class="project-mockup" style="position:relative;">
+        <div class="phone-mock blurred"><div>UI</div></div>
+        <div class="phone-mock blurred"><div>UI</div></div>
+        <div class="phone-mock blurred"><div>UI</div></div>
+        <div class="phone-mock blurred"><div>UI</div></div>
+        <span class="coming-soon-badge">COMING SOON</span>
+      </a>
+      <div class="project-info">
+        <div class="project-title">One More Set</div>
+        <div class="project-desc">A minimalist workout tracker with gesture-based navigation and haptic feedback.<br>A streamlined tool focused on the essence of training, without unnecessary distractions.</div>
+      </div>
+    </div>
+
+    <div class="project-block reveal reveal-delay-2">
+      <a href="../Project page/project.html?id=5" style="display:block; width:100%; border-radius:16px; overflow:hidden; margin-bottom:12px;">
+        <img src="Images/cover_machol.png" alt="Machol Shalem Website Redesign" style="width:100%; display:block; aspect-ratio:16/9; object-fit:cover;">
+      </a>
+      <div class="project-info">
+        <div class="project-title">MACHOL SHALEM WEBSITE REDISIGN</div>
+        <div class="project-desc">I redesigned the website around clarity and usability.I rebuilt the information architecture, created a clean visual system with more space and lighter layouts, and introduced consistent, visible CTAs to make ticket purchasing intuitive. Content was reorganized to highlight the most important actions, reducing visual clutter and creating a smooth, structured user journey that supports both artistic storytelling and conversion goals.</div>
+      </div>
+    </div>
+
+    <div class="project-block reveal reveal-delay-3">
+      <a href="../Project page/project.html?id=6" style="display:block; width:100%; border-radius:16px; overflow:hidden; margin-bottom:12px;">
+        <img src="Images/Yandex Plus user flow before login/1.png" style="width:100%; display:block; aspect-ratio:16/9; object-fit:cover;">
+      </a>
+      <div class="project-info">
+        <div class="project-title">Yandex Plus User Flow Before Login</div>
+        <div class="project-desc">A redesigned user flow for Yandex Plus before login — focused on reducing friction and clearly communicating subscription value to new users.</div>
+      </div>
+    </div>
+
+    <div class="project-block reveal">
+      <a href="../Project page/project.html?id=7" style="display:block; width:100%; border-radius:16px; overflow:hidden; margin-bottom:12px;">
+        <img src="Images/Studenst/10.jpg" style="width:100%; display:block; aspect-ratio:16/9; object-fit:cover;">
+      </a>
+      <div class="project-info">
+        <div class="project-title">Yandex Plus Students</div>
+        <div class="project-desc">A redesigned Yandex Plus experience tailored for students — focused on communicating subscription value and reducing onboarding friction for a younger audience.</div>
+      </div>
+    </div>
+
+    <div class="project-block reveal">
+      <a href="../Project page/project.html?id=8" style="display:block; width:100%; border-radius:16px; overflow:hidden; margin-bottom:12px;">
+        <img src="Images/genius education/genius.png" style="width:100%; display:block; aspect-ratio:16/9; object-fit:cover;">
+      </a>
+      <div class="project-info">
+        <div class="project-title">Genius Education</div>
+        <div class="project-desc">A learning platform redesigned for focus and motivation — clear onboarding, structured daily lessons, and a visual system built around progress and achievement.</div>
+      </div>
+    </div>
+
+    <!-- EXTRA PROJECTS (shown after clicking "more") -->
+    <div class="extra-projects" id="extraProjects">
+      <div class="project-block reveal">
+        <a href="project.html?id=6" class="work-card" style="display:block;aspect-ratio:16/7;margin-bottom:12px;border-radius:16px;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1545235617-9465d2a55698?w=1100&q=80" alt="Project 6" style="width:100%;height:100%;object-fit:cover;">
+          <span class="work-card-label">Project 6</span>
+        </a>
+        <div class="project-info">
+          <div class="project-title">Project Title</div>
+          <div class="project-desc">Short description of this project goes here.</div>
+        </div>
+      </div>
+      <div class="project-block reveal reveal-delay-1">
+        <a href="project.html?id=7" class="work-card" style="display:block;aspect-ratio:16/7;margin-bottom:12px;border-radius:16px;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1100&q=80" alt="Project 7" style="width:100%;height:100%;object-fit:cover;">
+          <span class="work-card-label">Project 7</span>
+        </a>
+        <div class="project-info">
+          <div class="project-title">Project Title</div>
+          <div class="project-desc">Short description of this project goes here.</div>
+        </div>
+      </div>
+      <div class="project-block reveal reveal-delay-2">
+        <a href="project.html?id=8" class="work-card" style="display:block;aspect-ratio:16/7;margin-bottom:12px;border-radius:16px;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=1100&q=80" alt="Project 8" style="width:100%;height:100%;object-fit:cover;">
+          <span class="work-card-label">Project 8</span>
+        </a>
+        <div class="project-info">
+          <div class="project-title">Project Title</div>
+          <div class="project-desc">Short description of this project goes here.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="more-wrap reveal">
+      <button class="btn-more" id="moreBtn" onclick="showMore()">more</button>
+    </div>
+
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="contact-title">Let's connect!</div>
+    <div class="contact-grid">
+      <a href="https://wa.me/972524727467" class="contact-link">whatsapp <span class="arrow">↗</span></a>
+      <a href="https://t.me/rapho1" class="contact-link">telegram <span class="arrow">↗</span></a>
+      <a href="mailto:raphalpert@gmail.com" class="contact-link">mail <span class="arrow">↗</span></a>
+      <a href="https://www.instagram.com/viktroraph/" class="contact-link">instagram <span class="arrow">↗</span></a>
+      <a href="https://www.linkedin.com/in/raphael-alpert-683a1b214/" class="contact-link">linkedin <span class="arrow">↗</span></a>
+    </div>
+  </section>
+
+  <footer>© 2025 Raphael — All rights reserved</footer>
+
+  <div id="cursor"></div>
+
+  <script>
+    /* ── SMOOTH CUSTOM CURSOR ── */
+    const cursor = document.getElementById('cursor');
+    let cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+    let tx = cx, ty = cy;
+    document.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; });
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+    });
+    (function animateCursor() {
+      cx += (tx - cx) * 0.18;
+      cy += (ty - cy) * 0.18;
+      cursor.style.left = cx + 'px';
+      cursor.style.top  = cy + 'px';
+      requestAnimationFrame(animateCursor);
+    })();
+
+    /* ── NAV SCROLL ── */
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 20));
+
+    /* ── SCROLL REVEAL ── */
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+    /* ── MORE BUTTON ── */
+    function showMore() {
+      const extra = document.getElementById('extraProjects');
+      extra.classList.add('visible');
+      document.getElementById('moreBtn').classList.add('hidden');
+      extra.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+    }
+
+    /* ── BURGER MENU ── */
+    function toggleMenu() {
+      document.getElementById('mobileMenu').classList.toggle('open');
+      document.getElementById('burger').classList.toggle('open');
+    }
+    function closeMobileMenu() {
+      document.getElementById('mobileMenu').classList.remove('open');
+      document.getElementById('burger').classList.remove('open');
+    }
+
+    /* ── EXPANDING CARDS — mobile tap only ── */
+    const cards = document.querySelectorAll('.exp-card');
+    let activeIdx = 0;
+    const isMobile = () => window.innerWidth <= 768;
+
+    function activateCard(idx) {
+      cards.forEach((c, i) => c.classList.toggle('active', i === idx));
+      activeIdx = idx;
+    }
+
+    cards.forEach((card, i) => {
+      card.addEventListener('click', e => {
+        if (!isMobile()) return; // desktop uses CSS hover
+        if (i !== activeIdx) {
+          e.preventDefault();
+          activateCard(i);
+        }
+        // active card on mobile → follow link normally
+      });
+    });
+  </script>
+</body>
+</html>
